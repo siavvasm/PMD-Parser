@@ -4,10 +4,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
-
-/*
- * Import the JDOM API libraries...
- */
 import org.jdom.*;
 import org.jdom.input.SAXBuilder;
 
@@ -15,7 +11,7 @@ import org.jdom.input.SAXBuilder;
  * A class for importing all the rules found in a desired PMD rule set
  * xml file into a PmdRuleset object.
  * 
- * @author Miltos
+ * @author Miltos Siavvas
  *
  */
 
@@ -24,14 +20,14 @@ public class MyXMLRulesetReader {
 	/**
 	 * The method for importing the desired rule set.
 	 * 
-	 * @param path : The exact url where the rule set is placed.
+	 * @param path : The exact url where the rule set xml file is placed.
 	 * @return ruleset : A PmdRuleset object containing the imported rules.
 	 */
 	public PmdRuleset parsePmdRuleset(String path){
-		int i = -1;
+		
 		PmdRuleset tempRuleset = new PmdRuleset();
+		
 		try{
-			
 			/* Import the xml file and create the tree representation */
 			SAXBuilder builder = new SAXBuilder();
 			Document doc = builder.build(new File(path));
@@ -40,8 +36,13 @@ public class MyXMLRulesetReader {
 			List<Element> ruleList = rootNode.getChildren();
 			System.out.println("RuleList size = " + ruleList.size());
 			PmdRuleset ruleset = new PmdRuleset();
+			
 			for (Element el : ruleList){
-				i++;
+				
+				/* Skip the description element. We focus only on the rule elements */
+				if(el.getName().equals("description")) continue;
+				
+				/* Create a new rule object and get all its attributes from the xml file */
 				Rule rule = new Rule();
 				rule.setName(el.getAttributeValue("name"));
 				System.out.println(el.getAttributeValue("name"));
@@ -51,41 +52,23 @@ public class MyXMLRulesetReader {
 				rule.setMessage(el.getAttributeValue("message"));
 				rule.seteExternalInfoUrl(el.getAttributeValue("externalInfoUrl"));
 				
-				/* Little Hack to get the priority value of the rule */
-				
+				/* Get the priority and the description of the current rule */
 				List<Element> pr = el.getChildren();
-				if (i == 0) continue;
-				Element desc = pr.get(0);
-				Element pri = pr.get(1);
-				System.out.println(pri.getName());
-				System.out.println(pri.getText());
-				
-				//Not working!!!
-				//String e = el.getChildText("priority");
-				//if (e == null) System.out.println("NUUUUUUULLLLL");
-				//if (i == 0) continue;
-				
-				rule.setPriority(Integer.parseInt(pri.getText()));
-				rule.setDescription(desc.getText());
-				
-				//Alternatively...
-				//rule.setDescription(el.getChildText("description"));
-				//rule.setPriority(Integer.parseInt(el.getChildText("description")));
+				rule.setPriority(Integer.parseInt(pr.get(1).getText()));
+				rule.setDescription(pr.get(0).getText());
+
+				/* Add the rule to the rule set */
 				ruleset.add(rule);
-			
 			}
 			
-			System.out.println("size : " + ruleset.size());
 			tempRuleset = ruleset;
-			//return ruleset;  ????????????????????? Why should i use a temp object instead of returning directly this one?
-
+			
 		}catch(IOException e){
 			System.out.println(e.getMessage());
 		}catch(JDOMException je){
 			System.out.println(je.getMessage());
 		}
-		return tempRuleset;
-		
+		/* Return the rule set */
+		return tempRuleset;	
 	}
-
 }
